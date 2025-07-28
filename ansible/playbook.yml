@@ -1,0 +1,18 @@
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: Include common tasks
+      include_tasks: common.yml
+
+- hosts: controller
+  become: true
+  tasks:
+    - name: Include controller tasks
+      include_tasks: controller.yml
+
+- hosts: workers
+  become: true
+  tasks:
+    - name: Include workers tasks
+      include_tasks: workers.yml
