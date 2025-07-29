@@ -67,7 +67,8 @@ INSTANCE_DATA=$(multipass list --format json | jq -r '.list[] | select(.state ==
 if [ -z "$INSTANCE_DATA" ]; then
     echo "ERROR: No running Multipass instances found."
     exit 1
-}
+fi
+
 
 # Process instances and append to inventory
 CONTROLLER_CONFIG=""
@@ -94,28 +95,39 @@ Configuring SSH access for all running instances..."
 
 while read -r name ip; do
     echo "--- Configuring instance: $name ($ip) ---"
-    # Use $HOME inside the double-quoted string to ensure it's evaluated on the remote machine
-    # Use a here-document (EOF) for the remote command to avoid complex quoting issues
-    # Check for success of each command
+    # Use a here-document (EOF) for the remote command. This is idempotent and will
+    # ensure the public key exists in authorized_keys without creating duplicates.
     if multipass exec "$name" -- bash <<EOF
         set -e # Exit on first error within this remote script
-        mkdir -p $HOME/.ssh
-        echo '$PUBLIC_KEY_CONTENT' > $HOME/.ssh/authorized_keys
-        chmod 700 $HOME/.ssh
-        chmod 600 $HOME/.ssh/authorized_keys
-        chown -R $USER:$USER $HOME/.ssh
+
+        # Ensure .ssh directory and authorized_keys file exist with correct permissions
+        # Variables escaped with \\ are evaluated on the remote machine.
+        mkdir -p "\$HOME/.ssh"
+        chmod 700 "\$HOME/.ssh"
+        touch "\$HOME/.ssh/authorized_keys"
+        chmod 600 "\$HOME/.ssh/authorized_keys"
+
+        # Add public key to authorized_keys if it's not already there.
+        # The local variable $PUBLIC_KEY_CONTENT is expanded by the local shell here.
+        if ! grep -q -F "$PUBLIC_KEY_CONTENT" "\$HOME/.ssh/authorized_keys"; then
+            echo "Adding public key to authorized_keys..."
+            echo "$PUBLIC_KEY_CONTENT" >> "\$HOME/.ssh/authorized_keys"
+        else
+            echo "Public key already exists in authorized_keys."
+        fi
+
+        # Ensure the .ssh directory and its contents are owned by the remote user.
+        chown -R \$USER:\$USER "\$HOME/.ssh"
 EOF
     then
         echo "Instance $name configured successfully."
     else
         echo "ERROR: Failed to configure SSH for instance $name. Please check the output above for details."
-        # Do not exit the entire script, but log the error
     fi
     echo "" # Add a newline for better readability
 done <<< "$INSTANCE_DATA"
 
-echo "
------------------------------------------"
+echo "-----------------------------------------"
 echo "SSH configuration attempt completed for all running instances."
 echo "Please review the output for any errors."
 echo "You can now run your Ansible playbook:"
