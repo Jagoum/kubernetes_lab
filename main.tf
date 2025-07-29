@@ -10,7 +10,7 @@ terraform {
 resource "multipass_instance" "controller" {
   name = "controller-node"
   cpus = 2
-  memory = "1G"
+  memory = "2G"
   disk = "5G"
 }
 
@@ -18,7 +18,7 @@ resource "multipass_instance" "worker" {
   count = 3
   name = "worker-${count.index}"
   cpus = 1
-  memory = "1G"
+  memory = "2G"
   disk = "5G"
 }
 

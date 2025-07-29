@@ -6,11 +6,11 @@ ansible_ssh_private_key_file=/Users/gis/.ssh/id_ed25519
 ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 
 [controller]
-controller-node ansible_host=192.168.82.60
+controller-node ansible_host=192.168.82.64
 
 
 [workers]
-worker-2 ansible_host=192.168.82.61
-worker-1 ansible_host=192.168.82.62
-worker-0 ansible_host=192.168.82.63
+worker-2 ansible_host=192.168.82.65
+worker-1 ansible_host=192.168.82.67
+worker-0 ansible_host=192.168.82.66
 
