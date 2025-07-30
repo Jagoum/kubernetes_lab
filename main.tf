@@ -11,7 +11,7 @@ resource "multipass_instance" "controller" {
   name = "controller-node"
   cpus = 2
   memory = "2G"
-  disk = "5G"
+  disk = "10G"
 }
 
 resource "multipass_instance" "worker" {
@@ -19,7 +19,7 @@ resource "multipass_instance" "worker" {
   name = "worker-${count.index}"
   cpus = 1
   memory = "2G"
-  disk = "5G"
+  disk = "10G"
 }
 
 output "controller_ip" {
