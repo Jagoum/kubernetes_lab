@@ -19,15 +19,10 @@ A Service is an abstraction that defines a logical set of pods and a policy by w
 
 ### Internal Traffic Flow Diagram
 
-```
-+-----------------+      +-----------------+
-|      Pod A      |----->|    Service B    |
-+-----------------+      +-----------------+
-                             |
-                             v
-                       +-----------+
-                       |   Pod B   |
-                       +-----------+
+```mermaid
+graph TD
+    A[Pod A] --> B(Service B)
+    B --> C[Pod B]
 ```
 
 ## External Traffic (North-South)
@@ -44,45 +39,27 @@ Ingress is the most powerful and flexible way to expose services. It allows you 
 
 ### External Traffic Flow Diagram (with Ingress)
 
-```
-                            +-------------------+
-                            |  External Client  |
-                            +-------------------+
-                                      |
-                                      v
-                        +---------------------------+
-                        |  External Load Balancer   |
-                        +---------------------------+
-                                      |
-                                      v
-+---------------------------------------------------------------------+
-|                           Kubernetes Cluster                          |
-|                                                                     |
-|  +-----------------+      +-----------------+      +-----------------+  |
-|  |      Node 1     |      |      Node 2     |      |      Node 3     |  |
-|  |                 |      |                 |      |                 |  |
-|  |  +-----------+  |      |  +-----------+  |      |  +-----------+  |  |
-|  |  |  Ingress  |  |      |  |           |  |      |  |           |  |  |
-|  |  | Controller|  |      |  |           |  |      |  |           |  |  |
-|  |  +-----------+  |      |  |           |  |      |  |           |  |  |
-|  |        |        |      |  |           |  |      |  |           |  |  |
-|  |        v        |      |  |           |  |      |  |           |  |  |
-|  |  +-----------+  |      |  |           |  |      |  |           |  |  |
-|  |  |  Service  |  |      |  |           |  |      |  |           |  |  |
-|  |  +-----------+  |      |  |           |  |      |  |           |  |  |
-|  |        |        |      |  |           |  |      |  |           |  |  |
-|  |        v        |      |  |           |  |      |  |           |  |  |
-|  |  +-----------+  |      |  +-----------+  |      |  +-----------+  |  |
-|  |  | Kube-proxy|  |      |  | Kube-proxy|  |      |  | Kube-proxy|  |  |
-|  |  +-----------+  |      |  +-----------+  |      |  +-----------+  |  |
-|  |   |     |     | |      |   |     |     | |      |   |     |     | |
-|  |   v     v     v |      |   v     v     v |      |   v     v     v |
-|  | +---+ +---+ +---+ |      | +---+ +---+ +---+ |      | +---+ +---+ +---+ |
-|  | |Pod| |Pod| |Pod| |      | |Pod| |Pod| |Pod| |      | |Pod| |Pod| |Pod| |
-|  | +---+ +---+ +---+ |      | +---+ +---+ +---+ |      | +---+ +---+ +---+ |
-|  +-----------------+      +-----------------+      +-----------------+  |
-|                                                                     |
-+---------------------------------------------------------------------+
+```mermaid
+graph TD
+    subgraph Kubernetes Cluster
+        subgraph Node 1
+            A[Ingress Controller] --> B(Service)
+            B --> C{kube-proxy}
+            C --> D[Pod]
+        end
+        subgraph Node 2
+            E[kube-proxy] --> F[Pod]
+        end
+        subgraph Node 3
+            G[kube-proxy] --> H[Pod]
+        end
+    end
+
+    subgraph External
+        I[External Client] --> J[External Load Balancer]
+    end
+
+    J --> A
 ```
 
 ## Securing Your Website with HTTPS
@@ -95,7 +72,18 @@ To secure your website with HTTPS, you need to obtain a TLS certificate from a t
 
 ### HTTPS Flow with Ingress and `cert-manager`
 
-![HTTPS Flow with Ingress and cert-manager](images/Screen Shot 2025-08-02 at 02.19.12.png)
+```mermaid
+graph TD
+    subgraph Kubernetes Cluster
+        A[Ingress Controller] --> B(Service)
+        C[cert-manager] --> A
+    end
+
+    subgraph External
+        D[Client] --> A
+        C --> E[Let's Encrypt]
+    end
+```
 
 ## Practical Lab (Proof of Concept)
 
